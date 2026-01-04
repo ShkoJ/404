@@ -229,6 +229,20 @@ class MerchandiseCustomizer {
     }
 
     setupButtons() {
+        // Delete selected button
+        document.getElementById('delete-selected-btn').addEventListener('click', () => {
+            if (this.selectedLayer) {
+                const layers = this.getCurrentLayers();
+                const index = layers.indexOf(this.selectedLayer);
+                if (index > -1) {
+                    layers.splice(index, 1);
+                }
+                this.selectedLayer = null;
+                this.render();
+            }
+        });
+
+        // Clear all button
         document.getElementById('clear-btn').addEventListener('click', () => {
             if (confirm('Clear all customizations on this view?')) {
                 this.getCurrentLayers().length = 0;
@@ -237,6 +251,7 @@ class MerchandiseCustomizer {
             }
         });
 
+        // Show design summary button
         document.getElementById('summary-btn').addEventListener('click', () => {
             this.showDesignSummary();
         });
@@ -331,6 +346,12 @@ class MerchandiseCustomizer {
                 this.drawSelectionHandles(layer);
             }
         });
+
+        // Show/hide delete button based on selection
+        const deleteBtn = document.getElementById('delete-selected-btn');
+        if (deleteBtn) {
+            deleteBtn.style.display = this.selectedLayer ? 'inline-flex' : 'none';
+        }
     }
 
     drawTextLayer(layer) {
