@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>404 Cafe - Design Your Merch</title>
+    <meta name="description" content="Design custom t-shirts and caps for 404 Cafe">
+
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- HEADER -->
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <h1>404 Cafe</h1>
+                    <p class="logo-subtitle">Design Your Merch</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT -->
+        <main>
+            <div class="customizer-container">
+                <!-- Product Selection -->
+                <div class="product-selector">
+                    <div class="product-option active" data-product="tshirt">
+                        <i class="ph-fill ph-t-shirt"></i>
+                        <h4>T-Shirt</h4>
+                    </div>
+                    <div class="product-option" data-product="cap">
+                        <i class="ph-fill ph-baseball-cap"></i>
+                        <h4>Cap</h4>
+                    </div>
+                </div>
+
+                <!-- View Selector -->
+                <div class="view-selector">
+                    <div class="view-tabs" id="view-tabs">
+                        <!-- T-Shirt views (default) -->
+                        <button class="view-tab active" data-view="front">
+                            <i class="ph ph-user"></i>
+                            Front
+                        </button>
+                        <button class="view-tab" data-view="back">
+                            <i class="ph ph-user"></i>
+                            Back
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Canvas -->
+                <div class="preview-container">
+                    <canvas id="customizer-canvas" width="600" height="600"></canvas>
+                    <p class="hint-text">Tap elements to select • Drag to move • Pinch to resize • Double-tap to delete
+                    </p>
+                </div>
+
+                <!-- Customization Tools -->
+                <div class="customizer-tools">
+                    <!-- Color Section -->
+                    <div class="tool-section">
+                        <div class="tool-label">Base Color</div>
+                        <div class="color-swatches">
+                            <div class="color-swatch active" data-color="#FFFFFF"
+                                style="background-color: #FFFFFF; border: 2px solid #ddd;"></div>
+                            <div class="color-swatch" data-color="#000000" style="background-color: #000000;"></div>
+                            <div class="color-swatch" data-color="#E63946" style="background-color: #E63946;"></div>
+                            <div class="color-swatch" data-color="#457B9D" style="background-color: #457B9D;"></div>
+                            <div class="color-swatch" data-color="#2A9D8F" style="background-color: #2A9D8F;"></div>
+                            <div class="color-swatch" data-color="#F4A261" style="background-color: #F4A261;"></div>
+                            <div class="color-swatch" data-color="#8D6E63" style="background-color: #8D6E63;"></div>
+                            <div class="color-swatch" data-color="#6A4C93" style="background-color: #6A4C93;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Text Section -->
+                    <div class="tool-section">
+                        <div class="tool-label">Add Text</div>
+                        <div class="input-group">
+                            <input type="text" id="custom-text-input" class="input-field"
+                                placeholder="Enter your text (e.g., ERBIL)">
+                        </div>
+                        <div class="tool-buttons mt-md">
+                            <button class="btn btn-secondary" id="add-text-btn">
+                                <i class="ph ph-text-t"></i>
+                                Add Text
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Upload Section -->
+                    <div class="tool-section">
+                        <div class="tool-label">Upload Logo/Image</div>
+                        <div class="tool-buttons">
+                            <button class="btn btn-secondary" id="upload-image-btn">
+                                <i class="ph ph-upload-simple"></i>
+                                Choose Image
+                            </button>
+                            <input type="file" id="image-upload-input" accept="image/*" class="hidden">
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="tool-section">
+                        <div class="tool-buttons">
+                            <button class="btn btn-outline" id="clear-btn">
+                                <i class="ph ph-trash"></i>
+                                Clear All
+                            </button>
+                            <button class="btn btn-primary" id="summary-btn">
+                                <i class="ph ph-check-circle"></i>
+                                Show Design
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- DESIGN SUMMARY MODAL -->
+    <div class="modal" id="summary-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Design Summary</h3>
+                <button class="modal-close" id="close-modal-btn">
+                    <i class="ph ph-x"></i>
+                </button>
+            </div>
+            <div id="summary-content">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="customizer.js"></script>
+</body>
+
+</html>
