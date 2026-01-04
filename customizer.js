@@ -1,6 +1,7 @@
 // ================================
 // 2D MERCHANDISE CUSTOMIZER
 // Multi-View Canvas-based Design
+// FIXED: Mobile touch detection & image scaling
 // ================================
 
 class MerchandiseCustomizer {
@@ -10,7 +11,7 @@ class MerchandiseCustomizer {
 
         // Product state
         this.currentProduct = 'tshirt';
-        this.currentView = 'front'; // front, back (tshirt) or front, left, right (cap)
+        this.currentView = 'front';
         this.baseColor = '#FFFFFF';
 
         // Product images
@@ -58,7 +59,6 @@ class MerchandiseCustomizer {
         // Set up event listeners
         this.setupProductSelector();
         this.setupViewSelector();
-        this.setupColorPicker();
         this.setupTextTool();
         this.setupImageUpload();
         this.setupCanvas();
@@ -105,12 +105,8 @@ class MerchandiseCustomizer {
                 options.forEach(o => o.classList.remove('active'));
                 option.classList.add('active');
                 this.currentProduct = option.dataset.product;
-
-                // Reset to first view when switching products
                 this.currentView = 'front';
                 this.selectedLayer = null;
-
-                // Update view tabs
                 this.updateViewTabs();
                 this.render();
             });
@@ -118,15 +114,12 @@ class MerchandiseCustomizer {
     }
 
     setupViewSelector() {
-        this.updateViewTabs(); // Initial setup
-
-        // Event delegation for view tabs
+        this.updateViewTabs();
         const viewTabsContainer = document.getElementById('view-tabs');
         viewTabsContainer.addEventListener('click', (e) => {
             const tab = e.target.closest('.view-tab');
             if (tab) {
-                const view = tab.dataset.view;
-                this.switchView(view);
+                this.switchView(tab.dataset.view);
             }
         });
     }
@@ -167,7 +160,6 @@ class MerchandiseCustomizer {
         this.currentView = view;
         this.selectedLayer = null;
 
-        // Update active tab
         const tabs = document.querySelectorAll('.view-tab');
         tabs.forEach(tab => {
             if (tab.dataset.view === view) {
@@ -182,18 +174,6 @@ class MerchandiseCustomizer {
 
     getCurrentLayers() {
         return this.designs[this.currentProduct][this.currentView];
-    }
-
-    setupColorPicker() {
-        const swatches = document.querySelectorAll('.color-swatch');
-        swatches.forEach(swatch => {
-            swatch.addEventListener('click', () => {
-                swatches.forEach(s => s.classList.remove('active'));
-                swatch.classList.add('active');
-                this.baseColor = swatch.dataset.color;
-                this.render();
-            });
-        });
     }
 
     setupTextTool() {
@@ -321,13 +301,13 @@ class MerchandiseCustomizer {
         const canvas = this.canvas;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = this.baseColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const productImg = this.productImages[this.currentProduct][this.currentView];
         if (productImg) {
-            const scale = Math.min(
+            // Use Math.max to fill the canvas (removes white space on sides)
+            const scale = Math.max(
                 canvas.width / productImg.width,
                 canvas.height / productImg.height
             );
@@ -376,12 +356,12 @@ class MerchandiseCustomizer {
         const bounds = this.getLayerBounds(layer);
 
         ctx.strokeStyle = '#2C1810';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
         ctx.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
         ctx.setLineDash([]);
 
-        const handleSize = 12;
+        const handleSize = 16;
         const corners = [
             { x: bounds.x, y: bounds.y },
             { x: bounds.x + bounds.width, y: bounds.y },
@@ -391,7 +371,7 @@ class MerchandiseCustomizer {
 
         ctx.fillStyle = '#FFFFFF';
         ctx.strokeStyle = '#2C1810';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         corners.forEach(corner => {
             ctx.beginPath();
             ctx.arc(corner.x, corner.y, handleSize / 2, 0, Math.PI * 2);
@@ -405,7 +385,7 @@ class MerchandiseCustomizer {
             this.ctx.font = `bold ${layer.fontSize}px Inter`;
             const metrics = this.ctx.measureText(layer.content);
             const width = metrics.width;
-            const height = layer.fontSize;
+            const height = layer.fontSize * 1.2; // Add some padding
             return {
                 x: layer.x - width / 2,
                 y: layer.y - height / 2,
@@ -424,10 +404,24 @@ class MerchandiseCustomizer {
         }
     }
 
-    handlePointerDown(e) {
+    // CRITICAL FIX: Proper coordinate scaling for mobile
+    getCanvasCoordinates(clientX, clientY) {
         const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        // The canvas internal size (600x600) may differ from displayed CSS size
+        // We need to scale the touch/click coordinates properly
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
+    }
+
+    handlePointerDown(e) {
+        const coords = this.getCanvasCoordinates(e.clientX, e.clientY);
+        const x = coords.x;
+        const y = coords.y;
 
         const layers = this.getCurrentLayers();
         for (let i = layers.length - 1; i >= 0; i--) {
@@ -451,9 +445,9 @@ class MerchandiseCustomizer {
     handlePointerMove(e) {
         if (!this.isDragging || !this.selectedLayer) return;
 
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        const coords = this.getCanvasCoordinates(e.clientX, e.clientY);
+        const x = coords.x;
+        const y = coords.y;
 
         const dx = x - this.dragStart.x;
         const dy = y - this.dragStart.y;
@@ -536,19 +530,15 @@ class MerchandiseCustomizer {
         const modal = document.getElementById('summary-modal');
         const content = document.getElementById('summary-content');
 
-        const colorName = this.getColorName(this.baseColor);
         const productName = this.currentProduct === 'tshirt' ? 'T-Shirt' : 'Cap';
 
-        // Generate previews for all views with designs
         let html = `
       <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; margin-bottom: 16px;">
         <h4 style="margin-bottom: 12px; color: #2C1810; font-size: 1rem;">Product Details</h4>
         <p style="margin: 8px 0;"><strong>Product:</strong> ${productName}</p>
-        <p style="margin: 8px 0;"><strong>Base Color:</strong> ${colorName}</p>
       </div>
     `;
 
-        // Show all designed views
         const views = this.currentProduct === 'tshirt' ? ['front', 'back'] : ['front', 'left', 'right'];
         const designedViews = views.filter(view => this.designs[this.currentProduct][view].length > 0);
 
@@ -583,10 +573,9 @@ class MerchandiseCustomizer {
     }
 
     generateViewPreview(view) {
-        // Temporarily switch to this view, capture, then switch back
         const originalView = this.currentView;
         this.currentView = view;
-        this.selectedLayer = null; // Don't show selection handles
+        this.selectedLayer = null;
         this.render();
         const dataURL = this.canvas.toDataURL('image/png');
         this.currentView = originalView;
@@ -594,30 +583,18 @@ class MerchandiseCustomizer {
         return dataURL;
     }
 
-    getColorName(hex) {
-        const colors = {
-            '#FFFFFF': 'White',
-            '#000000': 'Black',
-            '#E63946': 'Red',
-            '#457B9D': 'Blue',
-            '#2A9D8F': 'Teal',
-            '#F4A261': 'Orange',
-            '#8D6E63': 'Brown',
-            '#6A4C93': 'Purple'
-        };
-        return colors[hex.toUpperCase()] || hex;
-    }
-
     downloadAllDesigns() {
         const views = this.currentProduct === 'tshirt' ? ['front', 'back'] : ['front', 'left', 'right'];
         const designedViews = views.filter(view => this.designs[this.currentProduct][view].length > 0);
 
-        designedViews.forEach(view => {
-            const preview = this.generateViewPreview(view);
-            const link = document.createElement('a');
-            link.download = `404-cafe-${this.currentProduct}-${view}.png`;
-            link.href = preview;
-            link.click();
+        designedViews.forEach((view, index) => {
+            setTimeout(() => {
+                const preview = this.generateViewPreview(view);
+                const link = document.createElement('a');
+                link.download = `404-cafe-${this.currentProduct}-${view}.png`;
+                link.href = preview;
+                link.click();
+            }, index * 200); // Slight delay between downloads
         });
     }
 }
